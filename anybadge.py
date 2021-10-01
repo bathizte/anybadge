@@ -96,6 +96,7 @@ TEMPLATE_SVG = """<?xml version="1.0" encoding="UTF-8"?>
         <text x="{{ label anchor }}" y="14">{{ label }}</text>
     </g>
     <g fill="{{ value text color }}" text-anchor="middle" font-family="{{ font name }}" font-size="{{ font size }}">
+        <title>{{ tooltip }}</title>
         <text x="{{ value anchor shadow }}" y="15" fill="#010101" fill-opacity=".3">{{ value }}</text>
         <text x="{{ value anchor }}" y="14">{{ value }}</text>
     </g>
@@ -123,6 +124,7 @@ class Badge(object):
     Args:
         label(str): Badge label text.
         value(str): Badge value text.
+        tooltip(str): Badge tooltip text.
         font_name(str, optional): Name of font to use.
         font_size(int, optional): Font size.
         num_padding_chars(float, optional): Number of padding characters to use to give extra
@@ -143,6 +145,7 @@ class Badge(object):
         value_format(str, optional) String with formatting to be used to format the value text.
         text_color(str, optional): Text color as a name or as an HTML color code.
         semver(bool, optional): Used to indicate that the value is a semantic version number.
+        tooltip(str, optional): Tooltip to display on hover.
 
     Examples:
 
@@ -203,7 +206,7 @@ class Badge(object):
                  num_value_padding_chars=None, template=None,
                  value_prefix='', value_suffix='', thresholds=None, default_color=None,
                  use_max_when_value_exceeds=True, value_format=None, text_color=None,
-                 semver=False):
+                 semver=False, tooltip=""):
         """Constructor for Badge class."""
         # Set defaults if values were not passed
         if not font_name:
@@ -229,6 +232,7 @@ class Badge(object):
 
         self.label = label
         self.value = value
+        self.tooltip = tooltip
 
         self.value_is_version = semver
         if self.value_is_version and not VERSION_COMPARISON_SUPPORTED:
@@ -337,13 +341,13 @@ class Badge(object):
 
     def _repr_svg_(self):
         """Return SVG representation when used inside Jupyter notebook cells.
-        
+
         This will render the SVG immediately inside a notebook cell when creating
         a Badge instance without assigning it to an identifier.
         """
         return self.badge_svg_text
-    
-    
+
+
     @classmethod
     def _get_next_mask_id(cls):
         """Return a new mask ID from a singleton sequence maintained on the class.
@@ -539,7 +543,8 @@ class Badge(object):
             .replace('{{ value text color }}', self.value_text_color) \
             .replace('{{ color split x }}', str(self.color_split_position)) \
             .replace('{{ value width }}', str(self.value_width))\
-            .replace('{{ mask id }}', self.mask_id)
+            .replace('{{ mask id }}', self.mask_id)\
+            .replace('{{ tooltip }}', self.tooltip)
 
     def __str__(self):
         """Return string representation of badge.
@@ -836,6 +841,7 @@ examples:
                         default=DEFAULT_TEXT_COLOR)
     parser.add_argument('-e', '--semver', action='store_true', default=False,
                         help='Treat value and thresholds as semantic versions.')
+    parser.add_argument('-tt', '--tooltip', type=str, help='The badge tooltip.', required=False)
     parser.add_argument('args', nargs=argparse.REMAINDER, help='Pairs of <upper>=<color>. '
                         'For example 2=red 4=orange 6=yellow 8=good. '
                         'Read this as "Less than 2 = red, less than 4 = orange...".')
@@ -880,7 +886,8 @@ def main(args=None):
                   num_label_padding_chars=args.label_padding, num_value_padding_chars=args.value_padding,
                   font_name=args.font, font_size=args.font_size, template=args.template,
                   use_max_when_value_exceeds=args.use_max, thresholds=threshold_dict,
-                  value_format=args.value_format, text_color=args.text_color, semver=args.semver)
+                  value_format=args.value_format, text_color=args.text_color,
+                  semver=args.semver, tooltip=args.tooltip)
 
     if args.file:
         # Write badge SVG to file
